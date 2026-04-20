@@ -1,0 +1,82 @@
+@import 'tailwindcss';
+
+/* Define manual dark mode selector for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base, primevue, utilities;
+
+@layer base {
+  @import 'tailwindcss/preflight' layer(base);
+}
+
+/* Optional: Add global body styles here */
+@layer base {
+  body {
+    @apply m-0 bg-slate-50 text-slate-900 transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  /* List */
+  /* 1. The entering/leaving animation */
+  .list-enter-active,
+  .list-leave-active {
+    transition: all 0.4s ease;
+  }
+
+  .list-enter-from,
+  .list-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  /* 2. The movement animation (for chips shifting left/right */
+  .list-move {
+    transition: transform 0.4s ease;
+  }
+
+  /* 3. Ensure leaving items don't "jump" out of the layout flow */
+  .list-leave-active {
+    position: absolute;
+  }
+
+  /* Fade Slide */
+  /* 1. Standard Enter/Leave transitions */
+  .fade-slide-enter-active,
+  .fade-slide-leave-active {
+    transition: all 0.5s ease;
+  }
+
+  .fade-slide-enter-from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  .fade-slide-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  /* 2. The Move transition (shuffles the list items */
+  .fade-slide-move {
+    transition: transform 0.5s ease;
+  }
+
+  /* 3. Ensure leaving items don't "jump" the layout */
+  .fase-slide-leave-active {
+    position: absolute;
+    width: 100%;
+  }
+}
+
+/* Ensure PrimeVue Cards look good in Dark Mode */
+@layer utilties {
+  .dark .p-card {
+    @apply border-slate-800! bg-slate-900! text-slate-100!;
+  }
+}
+
+/* PrimeVue styles will automatically sit between base and utilities 
+  because of the layer order defined above */
