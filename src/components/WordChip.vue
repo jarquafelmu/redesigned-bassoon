@@ -34,11 +34,6 @@ const variants = {
   <Chip
     :label="word"
     :removable
-    v-tooltip.bottom="
-      CHIP_VARIANTS.SYNONYM === variant
-        ? 'Click to search'
-        : 'Click to search, X to remove'
-    "
     :class="[
       'cursor-pointer border border-transparent text-xs',
       variants[variant],
