@@ -8,10 +8,10 @@ const { data } = storeToRefs(store);
 </script>
 
 <template>
-  <div v-if="data">
+  <div v-if="data" class="flex flex-col gap-5">
     <h1 class="text-4xl font-bold capitalize">{{ data.word }}</h1>
 
-    <FrequencyMeter class="my-5" />
+    <FrequencyMeter />
 
     <div class="min-h relative">
       <TransitionGroup name="fade-slide" tag="div" class="flex flex-col gap-8">
@@ -20,7 +20,6 @@ const { data } = storeToRefs(store);
             ? [store.selectedPartOfSpeech]
             : store.availablePartsOfSpeech"
           :key="partOfSpeech"
-          class="mb-10"
         >
           <div class="mb-4 flex items-center gap-4">
             <h3
