@@ -1,7 +1,9 @@
 import { acceptHMRUpdate, defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useRapidFetch } from '../api/rapidApi';
 import { type WordResult, type WordsApiResponse } from '../lib/types';
+import { ROUTES, type DictionaryQuery } from '../router/routes';
 
 export const useDictionaryStore = defineStore('dictionary', () => {
   // State
@@ -10,6 +12,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
   const history = ref<string[]>([]);
   const isNotFound = ref<boolean>(false);
   const selectedPartOfSpeech = ref<string>();
+  const router = useRouter();
 
   ///// Fetch Logic /////
   const fetchState = useRapidFetch(() => `/${searchTerm.value}`, {
@@ -75,7 +78,19 @@ export const useDictionaryStore = defineStore('dictionary', () => {
       // 2. Set the new word as the current word
       currentWord.value = data.value.word.toLowerCase();
 
-      // 3. Clear search input (optional, but keeps the UI clean)
+      // 3. Navigate to the word's route
+      const query: DictionaryQuery = {
+        word: currentWord.value,
+        ...(selectedPartOfSpeech.value && {
+          partOfSpeech: selectedPartOfSpeech.value,
+        }),
+      };
+      router.push({
+        name: ROUTES.DICTIONARY.name,
+        query,
+      });
+
+      // 4. Clear search input (optional, but keeps the UI clean)
       searchTerm.value = '';
     } else {
       // Clear the current display if the search failed
@@ -87,6 +102,23 @@ export const useDictionaryStore = defineStore('dictionary', () => {
     isNotFound.value = false;
   };
 
+  // Watch for URL changes (back / forward buttons)
+  watch(
+    () => router.currentRoute.value.query,
+    async (query) => {
+      const queryParams = query as DictionaryQuery;
+      const word = queryParams.word;
+      const partOfSpeech = queryParams.partOfSpeech;
+
+      if (word && word !== currentWord.value) {
+        await search(word);
+        if (partOfSpeech) {
+          selectedPartOfSpeech.value = partOfSpeech;
+        }
+      }
+    },
+    { immediate: true }
+  );
   const removeFromHistory = (wordToRemove: string) => {
     history.value = history.value.filter((word) => word !== wordToRemove);
   };
