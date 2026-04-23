@@ -7,6 +7,9 @@ import { ROUTES, type DictionaryQuery } from '../router/routes';
 
 export const useDictionaryStore = defineStore('dictionary', () => {
   // State
+  // Note: searchTerm and currentWord serve different purposes:
+  // - searchTerm: temporary value while user types in search box
+  // - currentWord: the word currently displayed on screen (only set after successful search)
   const searchTerm = ref('');
   const currentWord = ref(''); // Track the word currently on screen
   const history = ref<string[]>([]);
@@ -19,6 +22,13 @@ export const useDictionaryStore = defineStore('dictionary', () => {
     immediate: false,
   }).json<WordsApiResponse>();
 
+  ///// API Response State /////
+  // These values are automatically updated by useRapidFetch
+  // - data: the actual word definition response
+  // - isFetching: loading state during API call
+  // - error: any errors that occurred
+  // - execute: function to manually trigger the fetch
+  // - response: the raw fetch response (used to check 404 status)
   const { data, isFetching, error, execute, response } = fetchState;
 
   ///// Parts of Speech /////
@@ -51,11 +61,16 @@ export const useDictionaryStore = defineStore('dictionary', () => {
   });
 
   ///// Actions /////
+  /**
+   * Search for a word in the dictionary
+   * @param word The word to search for. If not provided, it will use the current searchTerm value.
+   */
   const search = async (word?: string) => {
     const targetWord = word || searchTerm.value;
     if (!targetWord || targetWord === currentWord.value) return;
 
     searchTerm.value = targetWord;
+
     await execute();
 
     if (response.value?.status === 404) {
@@ -92,6 +107,9 @@ export const useDictionaryStore = defineStore('dictionary', () => {
 
       // 4. Clear search input (optional, but keeps the UI clean)
       searchTerm.value = '';
+
+      // 5. Clear selected part of speech filter since we have new results
+      selectedPartOfSpeech.value = undefined;
     } else {
       // Clear the current display if the search failed
       // so the user doesn't see old data with a "not found" message
@@ -119,20 +137,33 @@ export const useDictionaryStore = defineStore('dictionary', () => {
     },
     { immediate: true }
   );
+
+  /**
+   * Remove a word from the search history
+   * @param wordToRemove The word to remove from history
+   */
   const removeFromHistory = (wordToRemove: string) => {
     history.value = history.value.filter((word) => word !== wordToRemove);
   };
 
   return {
-    history,
+    // Fetch/API state
     isFetching,
     error,
     data,
+
+    // UI state
     searchTerm,
     isNotFound,
+    currentWord,
+    history,
     selectedPartOfSpeech,
+
+    // Computed/derived state
     availablePartsOfSpeech,
     groupedResults,
+
+    // Actions
     search,
     removeFromHistory,
   };
