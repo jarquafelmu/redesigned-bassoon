@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useDictionaryStore } from '../stores/dictionary';
 
+const { t } = useI18n();
 const store = useDictionaryStore();
 
 // Low frequency (rare) = Green (120)
@@ -23,8 +25,8 @@ const getFrequencyColor = (freq: number) => {
     <div
       class="flex justify-between text-xs font-bold tracking-widest text-slate-500 uppercase"
     >
-      <span>Rare</span>
-      <span>Common</span>
+      <span>{{ t('frequency.rare') }}</span>
+      <span>{{ t('frequency.common') }}</span>
     </div>
 
     <!-- The Meter -->
@@ -41,7 +43,7 @@ const getFrequencyColor = (freq: number) => {
     </div>
 
     <p class="text-xs text-slate-500 italic dark:text-slate-400">
-      Frequency Store: {{ store.data.frequency.toFixed(2) }}
+      {{ t('frequency.store', { frequency: store.data.frequency.toFixed(2) }) }}
     </p>
   </div>
 </template>

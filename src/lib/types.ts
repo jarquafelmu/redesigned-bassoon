@@ -2,9 +2,20 @@ export type WordResult = {
   definition: string;
   partOfSpeech: string;
   synonyms?: string[];
+  antonyms?: string[];
   typeOf?: string[];
+  hasTypes?: string[];
+  partOf?: string[];
+  hasParts?: string[];
+  instanceOf?: string[];
+  hasInstances?: string[];
+  similarTo?: string[];
+  also?: string[];
+  entails?: string[];
   derivation?: string[];
   examples?: string[];
+  regionOf?: string[];
+  memberOf?: string[];
 };
 
 export type Syllables = {

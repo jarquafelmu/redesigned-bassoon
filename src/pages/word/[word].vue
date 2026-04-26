@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useTitle } from '@vueuse/core';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import DictionarySearchPanel from '../../components/DictionarySearchPanel.vue';
 import { firstOrValue } from '../../lib/helper';
 import { useDictionaryStore } from '../../stores/dictionary';
 
+const { t } = useI18n();
 const store = useDictionaryStore();
 
 const route = useRoute();
@@ -13,7 +15,7 @@ const word = computed(() => firstOrValue(route.params.word));
 
 useTitle(
   computed(() =>
-    word.value ? `${word.value} | Dictionary MVP` : 'Dictionary MVP'
+    word.value ? `${word.value} | ${t('app.title')}` : t('app.title')
   )
 );
 </script>
@@ -30,16 +32,16 @@ useTitle(
     <!-- 3. Error / No Results Found -->
     <NoResults
       v-else-if="store.isNotFound"
-      title="Word Not Found"
-      message="We couldn't find any record of this word in our database. Please check your spelling."
+      :title="t('empty.notFound.title')"
+      :message="t('empty.notFound.message')"
       icon="pi pi-question-circle"
     />
 
     <!-- 4. Error / No Definitions Found -->
     <NoResults
       v-else-if="store.error || (store.data && !store.data.results)"
-      title="No Definitions Found"
-      message="That word exists in your database but has no definitions listed."
+      :title="t('empty.noDefinitions.title')"
+      :message="t('empty.noDefinitions.message')"
       icon="pi pi-question-circle"
     />
 

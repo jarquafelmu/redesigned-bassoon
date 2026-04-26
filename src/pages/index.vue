@@ -1,11 +1,17 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+</script>
+
 <template>
   <DictionarySearchPanel />
 
   <div class="results-area mt-10">
     <!-- 1. Initial State (Nothing searched yet) -->
     <NoResults
-      title="Ready to Search?"
-      message="Type a word above or click a recent search to get started."
+      :title="t('empty.noResults.title')"
+      :message="t('empty.noResults.message')"
       icon="pi pi-book"
     />
   </div>
