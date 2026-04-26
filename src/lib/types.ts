@@ -16,7 +16,21 @@ export type WordsApiResponse = {
   word: string;
   results?: WordResult[];
   syllables?: Syllables;
-  pronunciation?: string | Record<string, string>;
+  pronunciation?: Record<string, string>;
   rhymes?: { all: string[] };
   frequency: number;
+};
+
+export type PartsOfSpeech =
+  | 'noun'
+  | 'verb'
+  | 'adjective'
+  | 'adverb'
+  | 'pronoun'
+  | 'preposition'
+  | 'conjunction'
+  | 'interjection';
+
+export type WordRouteQuery = {
+  partOfSpeech?: PartsOfSpeech;
 };

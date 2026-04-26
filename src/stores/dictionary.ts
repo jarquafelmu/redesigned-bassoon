@@ -1,9 +1,14 @@
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, type RouteLocationNormalizedLoaded } from 'vue-router';
 import { useRapidFetch } from '../api/rapidApi';
-import { type WordResult, type WordsApiResponse } from '../lib/types';
-import { ROUTES, type DictionaryQuery } from '../router/routes';
+import { firstOrValue } from '../lib/helper';
+import {
+  type PartsOfSpeech,
+  type WordResult,
+  type WordRouteQuery,
+  type WordsApiResponse,
+} from '../lib/types';
 
 export const useDictionaryStore = defineStore('dictionary', () => {
   // State
@@ -14,7 +19,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
   const currentWord = ref(''); // Track the word currently on screen
   const history = ref<string[]>([]);
   const isNotFound = ref<boolean>(false);
-  const selectedPartOfSpeech = ref<string>();
+  const selectedPartOfSpeech = ref<PartsOfSpeech>();
   const router = useRouter();
 
   ///// Fetch Logic /////
@@ -62,14 +67,12 @@ export const useDictionaryStore = defineStore('dictionary', () => {
 
   ///// Actions /////
   /**
-   * Search for a word in the dictionary
-   * @param word The word to search for. If not provided, it will use the current searchTerm value.
+   * Fetches the definition for a given word and updates the store state accordingly.
+   *
+   * @param word The word to fetch definitions for. If not provided, uses the current searchTerm.
    */
-  const search = async (word?: string) => {
-    const targetWord = word || searchTerm.value;
-    if (!targetWord || targetWord === currentWord.value) return;
-
-    searchTerm.value = targetWord;
+  async function fetchWord(word: string): Promise<void> {
+    searchTerm.value = word;
 
     await execute();
 
@@ -83,32 +86,15 @@ export const useDictionaryStore = defineStore('dictionary', () => {
     // AND the new word actually has results
     if (data.value?.results && !error.value) {
       // 1. If there was a word already showing, move it to history
-      if (currentWord.value) {
-        // Create a unique set, putting the new word first
-        const nextHistory = new Set([currentWord.value, ...history.value]);
-        // Convert to array, keep the last 10 words
-        history.value = Array.from(nextHistory).slice(0, 10); // Keep top 10
-      }
+      addCurrentWordToHistory();
 
       // 2. Set the new word as the current word
       currentWord.value = data.value.word.toLowerCase();
 
-      // 3. Navigate to the word's route
-      const query: DictionaryQuery = {
-        word: currentWord.value,
-        ...(selectedPartOfSpeech.value && {
-          partOfSpeech: selectedPartOfSpeech.value,
-        }),
-      };
-      router.push({
-        name: ROUTES.DICTIONARY.name,
-        query,
-      });
-
-      // 4. Clear search input (optional, but keeps the UI clean)
+      // 3. Clear search input (optional, but keeps the UI clean)
       searchTerm.value = '';
 
-      // 5. Clear selected part of speech filter since we have new results
+      // 4. Clear selected part of speech filter since we have new results
       selectedPartOfSpeech.value = undefined;
     } else {
       // Clear the current display if the search failed
@@ -118,33 +104,102 @@ export const useDictionaryStore = defineStore('dictionary', () => {
 
     // reset value since a word was found
     isNotFound.value = false;
-  };
-
-  // Watch for URL changes (back / forward buttons)
-  watch(
-    () => router.currentRoute.value.query,
-    async (query) => {
-      const queryParams = query as DictionaryQuery;
-      const word = queryParams.word;
-      const partOfSpeech = queryParams.partOfSpeech;
-
-      if (word && word !== currentWord.value) {
-        await search(word);
-        if (partOfSpeech) {
-          selectedPartOfSpeech.value = partOfSpeech;
-        }
-      }
-    },
-    { immediate: true }
-  );
+  }
 
   /**
-   * Remove a word from the search history
+   * Navigates to the route for a given word, which triggers the fetch and updates the store state.
+   *
+   * @param word The word to navigate to
+   */
+  function goToWord(word?: string): void {
+    const targetWord = word || searchTerm.value;
+    if (!targetWord || targetWord === currentWord.value) return;
+
+    const query: WordRouteQuery = {
+      ...(selectedPartOfSpeech.value && {
+        partOfSpeech: selectedPartOfSpeech.value,
+      }),
+    };
+
+    router.push({
+      name: '/word/[word]',
+      params: { word: targetWord },
+      query,
+    });
+  }
+
+  /**
+   * Removes a word from the search history.
    * @param wordToRemove The word to remove from history
    */
-  const removeFromHistory = (wordToRemove: string) => {
+  function removeFromHistory(wordToRemove: string): void {
     history.value = history.value.filter((word) => word !== wordToRemove);
-  };
+  }
+
+  /**
+   * Adds the current word to the search history, ensuring uniqueness and limiting to the 10 most recent entries.
+   */
+  function addCurrentWordToHistory(): void {
+    if (currentWord.value) {
+      // Create a unique set, putting the new word first
+      const nextHistory = new Set([currentWord.value, ...history.value]);
+      // Convert to array, keep the last 10 words
+      history.value = Array.from(nextHistory).slice(0, 10);
+    }
+  }
+
+  /**
+   * Synchronizes the store state with the current route parameters and query.
+   *
+   * This ensures that when a user navigates using the browser's back/forward buttons,
+   * the store updates to reflect the word and part of speech specified in the URL.
+   *
+   * @param route The current route object from Vue Router
+   */
+  async function syncRouteToStore(
+    route: RouteLocationNormalizedLoaded
+  ): Promise<void> {
+    const word = firstOrValue(route.params.word);
+    const partOfSpeech = firstOrValue(route.query.partOfSpeech) as
+      | PartsOfSpeech
+      | undefined;
+
+    if (word && word !== currentWord.value) {
+      await fetchWord(word);
+    }
+
+    selectedPartOfSpeech.value = partOfSpeech;
+  }
+
+  /**
+   * Synchronizes the part of speech selection with the route query.
+   * @param partOfSpeech The part of speech to synchronize.
+   */
+  function syncPartOfSpeechToRoute(partOfSpeech?: PartsOfSpeech): void {
+    if (!currentWord.value) return;
+
+    const currentPartOfSpeech = firstOrValue(
+      router.currentRoute.value.query.partOfSpeech
+    );
+
+    if (partOfSpeech === currentPartOfSpeech) return;
+
+    router.replace({
+      name: '/word/[word]',
+      params: { word: currentWord.value },
+      query: {
+        // Omitting the key when undefined removes partOfSpeech from the URL.
+        ...(partOfSpeech && { partOfSpeech }),
+      },
+    });
+  }
+
+  //// Watchers ////
+  // Watch for URL changes (back / forward buttons)
+  watch(() => router.currentRoute.value, syncRouteToStore, { immediate: true });
+
+  // Watch for part of speech filter changes to sync with URL
+  watch(selectedPartOfSpeech, syncPartOfSpeechToRoute);
 
   return {
     // Fetch/API state
@@ -164,7 +219,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
     groupedResults,
 
     // Actions
-    search,
+    goToWord,
     removeFromHistory,
   };
 });

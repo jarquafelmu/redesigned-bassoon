@@ -50,7 +50,7 @@ const variants = {
       'dark:[&_.p-chip-remove-icon]:text-slate-500!',
       'dark:hover:[&_.p-chip-remove-icon]:bg-red-900/50! dark:hover:[&_.p-chip-remove-icon]:text-red-400!',
     ]"
-    @click="store.isFetching ? null : store.search(word)"
+    @click="store.isFetching ? null : store.goToWord(word)"
     @remove.stop="store.removeFromHistory(word)"
   />
 </template>

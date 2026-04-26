@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { ROUTES } from './routes';
-
-export const routes = [ROUTES.DICTIONARY];
+import { routes } from 'vue-router/auto-routes';
 
 const router = createRouter({
   history: createWebHistory('/'),

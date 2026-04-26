@@ -16,9 +16,23 @@ export default [
   {
     files: ['**/*.{ts,mts,tsx,vue}'],
     rules: {
-      'vue/multi-word-component-names': 'warn',
+      'vue/multi-word-component-names': [
+        'error',
+        {
+          ignores: ['App', 'index'],
+        },
+      ],
       '@typescript-eslint/no-unused-vars': 'warn',
     },
+    overrides: [
+      {
+        // Target only the files inside your pages or views folder
+        files: ['src/pages/**/*.vue', 'src/views/**/*.vue'],
+        rules: {
+          'vue/multi-word-component-names': 'off',
+        },
+      },
+    ],
   },
 
   // Prettier integration (MUST be last)
