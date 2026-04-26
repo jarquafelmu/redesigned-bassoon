@@ -113,6 +113,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
    */
   function goToWord(word?: string): void {
     const targetWord = word || searchTerm.value;
+
     if (!targetWord || targetWord === currentWord.value) return;
 
     const query: WordRouteQuery = {
