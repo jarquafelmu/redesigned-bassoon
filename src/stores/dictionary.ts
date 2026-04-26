@@ -84,7 +84,7 @@ export const useDictionaryStore = defineStore('dictionary', () => {
 
     // ONLY move the previous word to history if the NEW search is successful
     // AND the new word actually has results
-    if (data.value?.results && !error.value) {
+    if (data.value && data.value.word && !error.value) {
       // 1. If there was a word already showing, move it to history
       addCurrentWordToHistory();
 
