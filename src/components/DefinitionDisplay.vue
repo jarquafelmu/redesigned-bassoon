@@ -11,6 +11,10 @@ const { data } = storeToRefs(store);
   <div v-if="data" class="flex flex-col gap-5">
     <h1 class="text-4xl font-bold capitalize">{{ data.word }}</h1>
 
+    <h2 v-if="data.syllables" class="text-xl font-semibold italic">
+      {{ data.syllables.list.join(' · ') }}
+    </h2>
+
     <FrequencyMeter />
 
     <div class="min-h relative">
